@@ -1,4 +1,4 @@
-import cBiRewire as br
+import BiRewire as br
 import numpy as np
 import igraph as i
 

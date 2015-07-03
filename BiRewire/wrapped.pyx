@@ -133,6 +133,7 @@ class Rewiring:
         self.data=data
         if type(self.data)==i.Graph:
             self.__type_of_data="graph"
+            self.__type_of_array="None"
             if self.data.is_directed():
                 print "Directed graph are not supported.\n" 
                 self.data=None
