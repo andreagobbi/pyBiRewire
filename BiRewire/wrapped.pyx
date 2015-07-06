@@ -192,13 +192,13 @@ class Rewiring:
                 #edgelist=np.ascontiguousarray(np.array(self.data.get_edgelist()),dtype=np.uintp)
                 #tmp=c_rewire_undireced_sparse(edgelist,)                
                 print "Not yet wrapped\n"
-                return "Rewiring algorithm not performed"
+                return False
         if self.__type_of_data=="array":
             if self.__type_of_array=="edgelist_u":
                 #edgelist=np.copy(self.data)
                 #tmp=c_rewire_undirected_sparse(edgelist,)
                 print("Not yet wrapped\n")
-                return "Rewiring algorithm not performed"
+                return False
             if self.__type_of_array=="edgelist_b":
                 result=np.copy(self.data)
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
@@ -216,9 +216,9 @@ class Rewiring:
         self.N=tmp[0]
         self.data_rewired=result
         if tmp[1]==0:
-            return "Successfully rewired"
+                return True
         else:
-            return  "Rewiring algorithm not performed"
+                return False
     def similarity(self):
             if self.data_rewired is None:
                 print "First rewire the graph :-)."
@@ -252,11 +252,11 @@ class Rewiring:
                 tmp=c_analysis(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)      
             else:
                 print "Give me an incidence or adjacency matrix"    
-                return -1
+                return False
         self.data_rewired=result
         self.jaccard_index=tmp[1]
         self.N=tmp[0]
-        return "Analysis completed."
+        return True         
     def sampler(self,path,K=2000,max=1000,N=-1,verbose=0,MAXITER=10, accuracy=0.00005,exact=True):
         if not os.path.exists(path):
             os.makedirs(path)
@@ -264,6 +264,8 @@ class Rewiring:
         for i in range(0,num_sub):
             if not os.path.exists(path+"/"+str(i)):
                 os.makedirs(path+"/"+str(i))
+                if K-max*(i+1)<0  :
+                    max=K-max*i
             for j in range(0,max):
                 
                 self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact)
