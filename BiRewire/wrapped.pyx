@@ -411,9 +411,9 @@ class Rewiring:
                 if self.__type_of_data=="array":
                     np.save(arr=self.data_rewired,file=out_file)
                 else:
-                    np.save(arr=np.array(self.data_rewired.get_edgelist),file=out_file)
+                    np.save(arr=np.array((self.data_rewired).get_edgelist()),file=out_file)
 
-            print "Saved "+str(max*(i+1))+" files\n"
+            print "Saved "+str(max)+" files"
         self.data=initial
         return True
 def read_BRCA(file):
