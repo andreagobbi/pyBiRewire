@@ -20,8 +20,25 @@ cdef extern from "lib/BiRewire.h":
     size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER)
     size_t rewire(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose)
     size_t rewire_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER)
-    #size_t rewire_sparse_ex(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER)
-    #size_t rewire_sparse(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose)
+    size_t rewire_sparse_ex(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER)
+    size_t rewire_sparse(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose)
+
+def c_rewire_sparse_undirected(np.ndarray left,np.ndarray right,np.ndarray degree,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
+
+    cdef size_t e,nc,nr,t
+    e= len(left)
+    nc=nr= len(degree)
+    t=nc*nr/2
+    d=e/t
+    if N==-1:
+        if exact:
+            N=ceil((e*(1-d)) *log((1-d)/accuracy) /2  )
+        else:
+            N=(e/(2*d^3-6*d^2+2*d+2))*log((1-d)/accuracy)  
+    if exact:
+        return N,<int>rewire_sparse_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose, N*MAXITER)
+    else:
+        return N,<int>rewire_sparse(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose)
 
 def c_rewire_sparse_bipartite(np.ndarray left,np.ndarray right,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
 
@@ -29,8 +46,11 @@ def c_rewire_sparse_bipartite(np.ndarray left,np.ndarray right,N=-1, verbose=1, 
     e= len(left)
     nc,nr= len(np.unique(left)),len(np.unique(right))
     t=nc*nr
-    if N ==-1:
-        N=ceil((e*(1-e/t)) *log((1-e/t)/accuracy) /2  )  
+    if N==-1:
+        if exact:
+            N=ceil((e*(1-e/t)) *log((1-e/t)/accuracy) /2  )
+        else:
+            N=ceil((e/(2-2*e/t)) *log((1-e/t)/accuracy) )   
     if exact:
         return N,<int>rewire_sparse_bipartite_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),nr, nc, N, e, verbose, N*MAXITER)
     else:
@@ -130,6 +150,30 @@ class Rewiring:
     #__type_of_graph=None
     #__type_of_array=None
     def __init__(self,data,type_of_array=None,type_of_graph=None):
+        """Rewiring object
+
+        This class contains useful information when dealing with undirected or bipartite
+        networks. During the initialization the class recorded the type of graph is used
+        and also the kind of representaion is used. 
+        :Parameters:
+            data : the initial data. It can be a numpy matrix encoding an edgelist, an incidence
+                matrix (for bipartite network) an adjacency matrix (for undirected network) or an 
+                igraph object. For a correct use, if an edgelist is given, the values (nodes id) must start
+                from 0 and have no holes.
+            type_of_array: one among "edgelist_b","incidence", "adjacence","edgelist_u". If the 
+                data filed is a numpy array we must specify what this array encodes. The first 
+                two encode a bipartite network, the other two an undirected graph.
+            type_of_graph: one among "bipartite", "undirected". Since the igraph function
+                determinating if a graph is bipartite seems not to work properly, we must force 
+                this information.
+        With a Rewiring object we can generate a rewired wersion of it using the method rewire. 
+        For more information about the rewiring algorithm see 
+        Moreover we can compute the jaccard index between the initial data and its rewired version
+        using the method jaccard_index, and performs an analysis of such index during the swithching 
+        steps using the method descibed in Gobbi et al. Fast randomization of large
+        genomic datasets while preserving alteration counts
+        Bioinformatics 2014 30(17): i617-i623 doi: 10.1093/bioinformatics/btu474.
+        """
         self.data=data
         if type(self.data)==i.Graph:
             self.__type_of_data="graph"
@@ -174,11 +218,34 @@ class Rewiring:
                 self.data=None
         print "Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph     
     def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True):
+        """ Rewiring routine
+
+        It performs N switching steps of the graph encoded as a Rewiring
+         object storing the result in the field data_rewired 
+         (using the same format of the filed data).
+        :Parameters:
+            N : the number of swithching steps (SS) to perform. If -1 (default)
+                the optimal bound is used. For reference see the documentation 
+                of the class Rewiring. 
+            verbose : 1 default. If 0 no message from C will displayed.    
+            MAXITER : a multiplier of N in order to let the algorithm finish also
+                in the case of inifinite loops
+            accuracy : the distance, in terms of edge ratio, between the current distance 
+                and the theoretical one from the fixed point.
+            exact : True defautl. If False the routine counts also the unsucessfull
+                switching step. A suitable N is computed in order to catch such faliures.
+
+        :Returns:   
+            Boolean: if the switching algorithm has been sucessfully completed.
+        """
         self.N=N
         self.verbose=verbose
         self.MAXITER=MAXITER
         self.accuracy=accuracy
         self.exact=exact
+        if N<=0 and N!=-1:
+            print 'N must be positive or -1'
+            return False 
         if self.__type_of_data=="graph":
             if self.__type_of_graph=="bipartite":
                 ##get edgelist
@@ -189,23 +256,40 @@ class Rewiring:
                 result=np.vstack((left,right)).T
                 result=i.Graph(list(result))
             else:
-                #edgelist=np.ascontiguousarray(np.array(self.data.get_edgelist()),dtype=np.uintp)
-                #tmp=c_rewire_undireced_sparse(edgelist,)                
-                print "Not yet wrapped\n"
-                return False
+                result=np.array(self.data.get_edgelist())
+                result[result[:,0].argsort()]
+                left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
+                right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
+                degree=np.ascontiguousarray(np.zeros(len(set(left).union(set(right)))),dtype=np.uintp)
+                for j in range (0,len(right)):
+                    degree[result[j,0]]+=1
+                    degree[result[j,1]]+=1
+                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact) 
+                result=np.vstack((left,right)).T
+                result=i.Graph(list(result))        
         if self.__type_of_data=="array":
             if self.__type_of_array=="edgelist_u":
-                #edgelist=np.copy(self.data)
-                #tmp=c_rewire_undirected_sparse(edgelist,)
-                print("Not yet wrapped\n")
-                return False
+                result=np.copy(self.data)
+                result[result[:,0].argsort()]
+                left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
+                right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
+                degree=np.ascontiguousarray(np.zeros(len(set(left).union(set(right)))),dtype=np.uintp)
+                for j in range (0,len(right)):
+                    degree[result[j,0]]+=1
+                    degree[result[j,1]]+=1
+                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                result=np.vstack((left,right)).T
+                for j in range(0,result.shape[0]):
+                    if result[j,0]>result[j,1]:
+                        t=result[j,0]
+                        result[j,0]=result[j,1]
+                        result[j,1]=t
             if self.__type_of_array=="edgelist_b":
                 result=np.copy(self.data)
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
                 right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
                 tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
                 result=np.vstack((left,right)).T
-                result=i.Graph(list(result))
             if self.__type_of_array=="incidence":
                 result=np.ascontiguousarray(np.copy(self.data),dtype="H")
                 tmp=c_rewire_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
@@ -220,23 +304,54 @@ class Rewiring:
         else:
                 return False
     def similarity(self):
-            if self.data_rewired is None:
-                print "First rewire the graph :-)."
-                return -1
-            else:
-                if self.__type_of_array=="edgelist_b" or self.__type_of_array=="edgelist_u":
-                    j_i=len(set(list(self.data)).intersection(set(list(self.data_rewired))))
-                    return j_i/(len(list(self.data))-j_i)
-                if self.__type_of_data=="graph":
-                    m1=self.data.get_edgelist
-                    m2=self.data_rewired.get_edgelist
-                    j_i=len(set(m1).intersection(set(m2)))
-                    return j_i/(len(list(m1))-j_i)
-                if self.__type_of_array=="incidence" or self.__type_of_array=="adjacence":
-                    return   (self.data*self.data_rewired).sum()/((self.data+self.data_rewired).sum()-(self.data*self.data_rewired).sum())
+        """Jaccard index
+
+        It computes the jaccard index between the data filed and the data_rewired file if different from None.
+
+        :Returns:   
+            double precision: the computed jaccard index.
+        """
+        if self.data_rewired is None:
+            print "First rewire the graph :-)."
+            return -1
+        else:
+            if self.__type_of_array=="edgelist_b" or self.__type_of_array=="edgelist_u":
+                m1=self.data.tolist()
+                m2=self.data_rewired.tolist()
+                m1=set(tuple(r) for r in m1)
+                m2=set(tuple(r) for r in m2)
+                j_i=len(m1.intersection(m2))
+                return j_i/(len(self.data.tolist())-j_i)
+            if self.__type_of_data=="graph":
+                m1=(self.data).get_edgelist()
+                m2=(self.data_rewired).get_edgelist()
+
+                j_i=len(set(m1).intersection(set(m2)))
+                return j_i/(len(list(m1))-j_i)
+            if self.__type_of_array=="incidence" or self.__type_of_array=="adjacence":
+                return   (self.data*self.data_rewired).sum()/((self.data+self.data_rewired).sum()-(self.data*self.data_rewired).sum())
 
     def analysis(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,step=10): 
-        #i can conmpute efficently the ji only incidence/adjacency matrix
+        """ Analysis routine
+
+        It computes the jaccard index between the initail grah and the current rewired version every step steps.
+        The result is stored as an numpy array in the field jaccard_index.
+        :Parameters:
+            N : the number of swithching steps (SS) to perform. If -1 (default)
+                the optimal bound is used. For reference see the documentation 
+                of the class Rewiring. 
+            verbose : 1 default. If 0 no message from C will displayed.    
+            MAXITER : a multiplier of N in order to let the algorithm finish also
+                in the case of inifinite loops
+            accuracy : the distance, in terms of edge ratio, between the current distance 
+                and the theoretical one from the fixed point.
+            exact : True defautl. If False the routine counts also the unsucessfull
+                switching step. A suitable N is computed in order to catch such faliures.
+            step : the number of SS between two measurement of the jaccard index.
+
+        :Returns:   
+            Boolean: if the switching algorithm has been sucessfully completed.
+        """
         self.verbose=verbose
         self.MAXITER=MAXITER
         self.accuracy=accuracy
@@ -251,16 +366,36 @@ class Rewiring:
             if self.__type_of_graph=="unidrected" and self.__type_of_array=="adjacence":
                 tmp=c_analysis(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)      
             else:
-                print "Give me an incidence or adjacency matrix"    
+                print "I accept only incidence and adjacency matrix"    
                 return False
         self.data_rewired=result
         self.jaccard_index=tmp[1]
         self.N=tmp[0]
         return True         
     def sampler(self,path,K=2000,max=1000,N=-1,verbose=0,MAXITER=10, accuracy=0.00005,exact=True):
+        """ Null model sampler
+
+        It creates K randomized graph starting from the initial graph writing the 
+        adjacency or incidence matrix or the edgelist.
+        :Parameters:
+            N : the number of swithching steps (SS) to perform. If -1 (default)
+                the optimal bound is used. For reference see the documentation 
+                of the class Rewiring. 
+            verbose : 1 default. If 0 no message from C will displayed.    
+            MAXITER : a multiplier of N in order to let the algorithm finish also
+                in the case of inifinite loops
+            accuracy : the distance, in terms of edge ratio, between the current distance 
+                and the theoretical one from the fixed point.
+            exact : True defautl. If False the routine counts also the unsucessfull
+                switching step. A suitable N is computed in order to catch such faliures.
+            
+        :Returns:   
+            Boolean: if the sampler procedure has been sucessfully completed.
+        """
         if not os.path.exists(path):
             os.makedirs(path)
         num_sub=ceil(K/max)
+        initial=self.data
         for i in range(0,num_sub):
             if not os.path.exists(path+"/"+str(i)):
                 os.makedirs(path+"/"+str(i))
@@ -268,19 +403,32 @@ class Rewiring:
                     max=K-max*i
             for j in range(0,max):
                 
-                self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact)
+                if self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact)==False:
+                    self.data=initial
+                    return False
                 self.data=self.data_rewired
                 out_file = path+"/"+str(i)+"/"+str(i)+"_"+str(j)
                 if self.__type_of_data=="array":
                     np.save(arr=self.data_rewired,file=out_file)
                 else:
                     np.save(arr=np.array(self.data_rewired.get_edgelist),file=out_file)
-                #out_file.write(self.data_rewired)
-                #out_file.close()
+
             print "Saved "+str(max*(i+1))+" files\n"
-        print "Finished."
+        self.data=initial
+        return True
 def read_BRCA(file):
-    cr = csv.reader(open(file))
+    """ Load the BRCA dataset
+    :Parameters:
+        path : the path in which the BRCA file is stored.
+        
+    :Returns:   
+        incidence matrix, colnames, rownames: the relative incidence matrix, the names of the 
+        names of the rows.
+    """
+    try:
+        cr = csv.reader(open(file))
+    except IOError:
+        print 'file not found.'
     lista=[]
     i=0
     rownames=[]

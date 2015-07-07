@@ -1,3 +1,3 @@
 * DOCUMENTATION
-* wrapper c function for undirected sparse network
 * CLEAN and DEBUG the code
+* EXTESION to directed signed networks

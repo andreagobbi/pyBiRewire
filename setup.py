@@ -2,8 +2,8 @@ from setuptools import setup, Extension
 from Cython.Distutils import build_ext
 import numpy as np
 
-NAME = "PyBiRewire"
-VERSION = "0.1"
+NAME = "BiRewire"
+VERSION = "0.2"
 DESCR = "A Cython wrapper of BiRewire"
 URL = "http://bioconductor.org/packages/devel/bioc/html/BiRewire.html"
 REQUIRES = ['numpy', 'cython']

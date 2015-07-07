@@ -6,6 +6,7 @@ g=i.Graph().Barabasi(100)
 r1=br.Rewiring(data=g,type_of_graph='undirected')
 r1.rewire()
 
+rr1=br.Rewiring(data=np.array(r1.data.get_edgelist()),type_of_array='edgelist_u')
 r2=br.Rewiring(data=np.array(g.get_adjacency().data),type_of_array='adjacence')
 r2.rewire()
 r2.similarity()

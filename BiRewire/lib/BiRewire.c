@@ -1032,81 +1032,81 @@ size_t rewire_ex(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_i
 
 
 }
-/*
-void static inline sub(size_t a,size_t b,size_t c,size_t d,size_t *degree,unsigned short **adj)
+
+void static inline sub(size_t a,size_t b,size_t c,size_t d,size_t *degree,unsigned short *adj,size_t *cumdeg)
 {
     size_t i;
 
     for(i=0;i<degree[a];i++)
-        if(adj[a][i]==b)
+        if(adj[cumdeg[a]+i]==b)
         {
-            adj[a][i]=d;
+            adj[cumdeg[a]+i]=d;
             break;
         }
 
     for(i=0;i<degree[b];i++)
-        if(adj[b][i]==a)
+        if(adj[cumdeg[b]+i]==a)
         {
-            adj[b][i]=c;
+            adj[cumdeg[b]+i]=c;
             break;
         }
     for(i=0;i<degree[c];i++)
-        if(adj[c][i]==d)
+        if(adj[cumdeg[c]+i]==d)
         {
-            adj[c][i]=b;
+            adj[cumdeg[c]+i]=b;
             break;
         }
 
     for(i=0;i<degree[d];i++)
-        if(adj[d][i]==c)
+        if(adj[cumdeg[d]+i]==c)
         {
-            adj[d][i]=a;
+            adj[cumdeg[d]+i]=a;
             break;
         }
 
 
 }
 
-void static inline sub2(size_t a,size_t b,size_t c,size_t d,size_t *degree,unsigned short **adj)
+void static inline sub2(size_t a,size_t b,size_t c,size_t d,size_t *degree,unsigned short *adj,size_t *cumdeg)
 {
     size_t i;
 
     for(i=0;i<degree[a];i++)
-        if(adj[a][i]==b)
+        if(adj[cumdeg[a]+i]==b)
         {
-            adj[a][i]=c;
+            adj[cumdeg[a]+i]=c;
             break;
         }
 
     for(i=0;i<degree[b];i++)
-        if(adj[b][i]==a)
+        if(adj[cumdeg[b]+i]==a)
         {
-            adj[b][i]=d;
+            adj[cumdeg[b]+i]=d;
             break;
         }
     for(i=0;i<degree[c];i++)
-        if(adj[c][i]==d)
+        if(adj[cumdeg[c]+i]==d)
         {
-            adj[c][i]=a;
+            adj[cumdeg[c]+i]=a;
             break;
         }
 
     for(i=0;i<degree[d];i++)
-        if(adj[d][i]==c)
+        if(adj[cumdeg[d]+i]==c)
         {
-            adj[d][i]=b;
+            adj[cumdeg[d]+i]=b;
             break;
         }
 
 
 }
 
-size_t static inline is_not(size_t a,size_t d,size_t *degree,unsigned short **adj)
+size_t static inline is_not(size_t a,size_t d,size_t *degree,unsigned short *adj,size_t *cumdeg)
 {
     size_t i;
 
     for(i=0;i<degree[a];i++)
-        if(adj[a][i]==d)
+        if(adj[cumdeg[a]+i]==d)
             return(0);
     return(1);
 }
@@ -1117,21 +1117,27 @@ size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t
     //copy of the original incidence matrix
 	size_t a,b,c,d;
 	size_t ad,cb,ac,bd;
-	unsigned short **adj;
-	do	adj=(unsigned short **)calloc(nrow,sizeof(unsigned short*)); while(adj==NULL);
+	unsigned short *adj;
+	size_t *cumdeg;
+	do	cumdeg=(size_t *)calloc(nrow,sizeof(size_t)); while(cumdeg==NULL);
+    cumdeg[0]=0;
+	for(i=1;i<nrow;i++)
+		{
+			cumdeg[i]=cumdeg[i-1]+degree[i-1]+1;
+		}
+	adj=(unsigned short *)calloc(cumdeg[nrow-1]+degree[nrow-1]+1,sizeof(unsigned short)); while(adj==NULL);
 	for(i=0;i<nrow;i++)
-    {
-       do	adj[i]= (unsigned short*)calloc(degree[i]+1,sizeof(unsigned short)); while(adj[i]==NULL);
-        adj[i][degree[i]]= degree[i];
-    }
+    	adj[cumdeg[i]+degree[i]]= degree[i];
+    
 	for(i=0;i<e;i++)
 		{
+
 			a=from[i];
 			b=to[i];
-			adj[a][degree[a]-adj[a][degree[a]]]=b;
-			adj[a][degree[a]]--;
-			adj[b][degree[b]-adj[b][degree[b]]]=a;
-			adj[b][degree[b]]--;
+			adj[cumdeg[a]+degree[a]-adj[cumdeg[a]+degree[a]]]=b;
+			adj[cumdeg[a]+degree[a]]--;
+			adj[cumdeg[b]+degree[b]-adj[cumdeg[b]+degree[b]]]=a;
+			adj[cumdeg[b]+degree[b]]--;
     }
 
   //GetRNGstate();
@@ -1150,10 +1156,10 @@ size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t
         b=to[rand1];
         d=to[rand2];
 
-        ad=is_not(a,d,degree,adj);
-        cb=is_not(c,b,degree,adj);
-        ac=is_not(c,a,degree,adj);
-        bd=is_not(b,d,degree,adj);
+        ad=is_not(a,d,degree,adj,cumdeg);
+        cb=is_not(c,b,degree,adj,cumdeg);
+        ac=is_not(c,a,degree,adj,cumdeg);
+        bd=is_not(b,d,degree,adj,cumdeg);
 
 		  // printf("%d %d %d %d %d %d %d %d %d %d \n ",rand1, rand2,a+1,b+1,c+1,d+1,ad,cb,ac,bd);
 
@@ -1166,13 +1172,13 @@ size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t
 
                     to[rand1]=d;
                     to[rand2]=b;
-                    sub(a,b,c,d,degree,adj);
+                    sub(a,b,c,d,degree,adj,cumdeg);
 
 
                 }
                 else
                 {
-                    sub2(a,b,c,d,degree,adj);
+                    sub2(a,b,c,d,degree,adj,cumdeg);
 
                     //	from[rand1]=d;
                     to[rand1]=c;
@@ -1188,14 +1194,14 @@ size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t
 
                     to[rand1]=d;
                     to[rand2]=b;
-                    sub(a,b,c,d,degree,adj);
+                    sub(a,b,c,d,degree,adj,cumdeg);
 
 
 
                 }
                 else
                 {
-                    sub2(a,b,c,d,degree,adj);
+                    sub2(a,b,c,d,degree,adj,cumdeg);
 
 
                     to[rand1]=c;
@@ -1221,21 +1227,27 @@ size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, siz
     //copy of the original incidence matrix
 	size_t a,b,c,d;
 	size_t ad,cb,ac,bd;
-	unsigned short **adj;
-	do	adj=(unsigned short **)calloc(nrow,sizeof(unsigned short*)); while(adj==NULL);
+	unsigned short *adj;
+	size_t *cumdeg;
+	do	cumdeg=(size_t *)calloc(nrow,sizeof(size_t)); while(cumdeg==NULL);
+    cumdeg[0]=0;
+	for(i=1;i<nrow;i++)
+		{
+			cumdeg[i]=cumdeg[i-1]+degree[i-1]+1;
+		}
+	adj=(unsigned short *)calloc(cumdeg[nrow-1]+degree[nrow-1]+1,sizeof(unsigned short)); while(adj==NULL);
 	for(i=0;i<nrow;i++)
-    {
-       do	adj[i]= (unsigned short*)calloc(degree[i]+1,sizeof(unsigned short)); while(adj[i]==NULL);
-        adj[i][degree[i]]= degree[i];
-    }
+    	adj[cumdeg[i]+degree[i]]= degree[i];
+    
 	for(i=0;i<e;i++)
 		{
+
 			a=from[i];
 			b=to[i];
-			adj[a][degree[a]-adj[a][degree[a]]]=b;
-			adj[a][degree[a]]--;
-			adj[b][degree[b]-adj[b][degree[b]]]=a;
-			adj[b][degree[b]]--;
+			adj[cumdeg[a]+degree[a]-adj[cumdeg[a]+degree[a]]]=b;
+			adj[cumdeg[a]+degree[a]]--;
+			adj[cumdeg[b]+degree[b]-adj[cumdeg[b]+degree[b]]]=a;
+			adj[cumdeg[b]+degree[b]]--;
     }
 
   //GetRNGstate();
@@ -1254,17 +1266,17 @@ size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, siz
         b=to[rand1];
         d=to[rand2];
 
-        ad=is_not(a,d,degree,adj);
-        cb=is_not(c,b,degree,adj);
-        ac=is_not(c,a,degree,adj);
-        bd=is_not(b,d,degree,adj);
+        ad=is_not(a,d,degree,adj,cumdeg);
+        cb=is_not(c,b,degree,adj,cumdeg);
+        ac=is_not(c,a,degree,adj,cumdeg);
+        bd=is_not(b,d,degree,adj,cumdeg);
 			if(t>MAXITER)
 		{
 
-  tfin = time (NULL);
-	if(verbose==1)
-    printf("DONE in %d seconds \n",-(tin-tfin));
-   //PutRNGstate();
+			tfin = time (NULL);
+			if(verbose==1)
+		    printf("DONE in %d seconds \n",-(tin-tfin));
+		   //PutRNGstate();
 			return (-1);
 
 
@@ -1282,13 +1294,13 @@ size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, siz
 
                     to[rand1]=d;
                     to[rand2]=b;
-                    sub(a,b,c,d,degree,adj);
+                    sub(a,b,c,d,degree,adj,cumdeg);
 
                     n++;
                 }
                 else
                 {
-                    sub2(a,b,c,d,degree,adj);
+                    sub2(a,b,c,d,degree,adj,cumdeg);
 
                     //	from[rand1]=d;
                     to[rand1]=c;
@@ -1304,14 +1316,14 @@ size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, siz
 
                     to[rand1]=d;
                     to[rand2]=b;
-                    sub(a,b,c,d,degree,adj);
+                    sub(a,b,c,d,degree,adj,cumdeg);
 
 
                     n++;
                 }
                 else
                 {
-                    sub2(a,b,c,d,degree,adj);
+                    sub2(a,b,c,d,degree,adj,cumdeg);
 
 
                     to[rand1]=c;
@@ -1329,4 +1341,3 @@ size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, siz
   //PutRNGstate();
 	return 0;
 }
-*/
