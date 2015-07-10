@@ -3,7 +3,7 @@ from Cython.Distutils import build_ext
 import numpy as np
 
 NAME = "BiRewire"
-VERSION = "0.2"
+VERSION = "0.3"
 DESCR = "A Cython wrapper of BiRewire"
 URL = "http://bioconductor.org/packages/devel/bioc/html/BiRewire.html"
 REQUIRES = ['numpy', 'cython']

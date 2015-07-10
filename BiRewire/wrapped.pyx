@@ -251,7 +251,8 @@ class Rewiring:
                 ##get edgelist
                 result=np.array(self.data.get_edgelist())
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
-                right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
+                #right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
+                right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
                 tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
                 result=np.vstack((left,right)).T
                 result=i.Graph(list(result))
@@ -287,7 +288,8 @@ class Rewiring:
             if self.__type_of_array=="edgelist_b":
                 result=np.copy(self.data)
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
-                right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
+                #right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
+                right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
                 tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
                 result=np.vstack((left,right)).T
             if self.__type_of_array=="incidence":
@@ -331,11 +333,12 @@ class Rewiring:
             if self.__type_of_array=="incidence" or self.__type_of_array=="adjacence":
                 return   (self.data*self.data_rewired).sum()/((self.data+self.data_rewired).sum()-(self.data*self.data_rewired).sum())
 
-    def analysis(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,step=10): 
+    def analysis(self,n_networks=50,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,step=10): 
         """ Analysis routine
 
         It computes the jaccard index between the initail grah and the current rewired version every step steps.
-        The result is stored as an numpy array in the field jaccard_index.
+        The rewirin process is performed severatl times in order to extimate the mean value and CI of the JI.
+        The result is stored as numpy array of 2 dimention in the field jaccard_index.
         :Parameters:
             N : the number of swithching steps (SS) to perform. If -1 (default)
                 the optimal bound is used. For reference see the documentation 
@@ -348,6 +351,7 @@ class Rewiring:
             exact : True defautl. If False the routine counts also the unsucessfull
                 switching step. A suitable N is computed in order to catch such faliures.
             step : the number of SS between two measurement of the jaccard index.
+            n_networks: the number of independent samples.
 
         :Returns:   
             Boolean: if the switching algorithm has been sucessfully completed.
@@ -359,17 +363,20 @@ class Rewiring:
         self.step=step
         self.N=N
         result=np.ascontiguousarray(np.copy(self.data),dtype="H")
-
-        if self.__type_of_graph=="bipartite" and self.__type_of_array=="incidence":
-            tmp=c_analysis_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)        
-        else:  
-            if self.__type_of_graph=="unidrected" and self.__type_of_array=="adjacence":
-                tmp=c_analysis(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)      
-            else:
-                print "I accept only incidence and adjacency matrix"    
-                return False
-        self.data_rewired=result
-        self.jaccard_index=tmp[1]
+        RES=list()
+        for j in range(0,n_networks):
+            if self.__type_of_graph=="bipartite" and self.__type_of_array=="incidence":
+                tmp=c_analysis_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)        
+            else:  
+                if self.__type_of_graph=="undirected" and self.__type_of_array=="adjacence":
+                    tmp=c_analysis_undirected(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)      
+                else:
+                    print "I accept only incidence and adjacency matrix"    
+                    return False
+            RES.append(tmp[1])
+            result=np.ascontiguousarray(np.copy(self.data),dtype="H")
+        self.data_rewired=None
+        self.jaccard_index=RES
         self.N=tmp[0]
         return True         
     def sampler(self,path,K=2000,max=1000,N=-1,verbose=0,MAXITER=10, accuracy=0.00005,exact=True):
@@ -395,7 +402,7 @@ class Rewiring:
         if not os.path.exists(path):
             os.makedirs(path)
         num_sub=ceil(K/max)
-        initial=self.data
+        initial=self.data.copy()
         for i in range(0,num_sub):
             if not os.path.exists(path+"/"+str(i)):
                 os.makedirs(path+"/"+str(i))
@@ -404,7 +411,7 @@ class Rewiring:
             for j in range(0,max):
                 
                 if self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact)==False:
-                    self.data=initial
+                    self.data=initial.copy()
                     return False
                 self.data=self.data_rewired
                 out_file = path+"/"+str(i)+"/"+str(i)+"_"+str(j)
@@ -416,6 +423,43 @@ class Rewiring:
             print "Saved "+str(max)+" files"
         self.data=initial
         return True
+    def monitoring(self,n_networks=50,sequence=(1,10,100,-1),verbose=0,MAXITER=10, accuracy=0.00005,exact=True): 
+        """ Monitoring of the underlying markov chain
+
+        It samples n_networks times the markov chain at the steps indicates in the list sequence.
+        For each of this step the pairwise distance matrix is computed. This distance matrix can 
+        be used to monitoring the makov chain for exmple using tsne dimentional scaling.
+        :Parameters:
+            n_networks : the number of samples for each step.
+            sequence : the steps sequence to test.
+            ...: other parameters passed to the function rewire.
+            
+        :Returns:   
+            list: a list of distance matrix, one for each step to test.
+        """
+        tot=[]
+        data_initial=self.data.copy()
+        self.MAXITER=MAXITER
+        self.verbose=verbose
+        self.accuracy=accuracy
+        self.exact=exact
+        for s in sequence:
+            self.data=data_initial.copy()
+            m=np.zeros((n_networks,n_networks))
+            d=[data_initial]
+            self.N=s
+            for j in range(1,n_networks):
+                self.rewire()
+                d.append(self.data_rewired)
+                self.data=self.data_rewired.copy()
+                for k in range(0,j):
+                    m[j,k]=m[k,j]=1-similarity(d[j],d[k],self.__type_of_array,self.__type_of_data)
+            tot.append({"k":s,"dist":m})
+        return tot
+               
+               
+
+
 def read_BRCA(file):
     """ Load the BRCA dataset
     :Parameters:
@@ -440,3 +484,21 @@ def read_BRCA(file):
             colnames=row[1:]
         i=i+1    
     return np.array(lista),colnames,rownames
+
+def similarity(m1,m2,array,data):
+    if array=="edgelist_b" or array=="edgelist_u":
+        m1=m1.tolist()
+        m2=m2.tolist()
+        e=len(self.data.tolist())
+        m1=set(tuple(r) for r in m1)
+        m2=set(tuple(r) for r in m2)
+        j_i=len(m1.intersection(m2))
+        return j_i/(e-j_i)
+    if data=="graph":
+        m1=m1.get_edgelist()
+        m2=m2.get_edgelist()
+        e=len(list(m1))
+        j_i=len(set(m1).intersection(set(m2)))
+        return j_i/(e-j_i)
+    if array=="incidence" or array=="adjacence":
+        return   (m1*m2).sum()/((m1+m2).sum()-(m1*m2).sum())

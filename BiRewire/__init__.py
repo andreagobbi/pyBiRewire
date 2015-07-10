@@ -1,1 +1,1 @@
-from .wrapped import Rewiring,incidence,read_BRCA
+from .wrapped import Rewiring,incidence,read_BRCA,similarity
