@@ -7,4 +7,4 @@ implementing the algorithms described in <a href="http://bioinformatics.oxfordjo
 
 # How to install
 
-Clone or download the whole progect, in the repo directory run `python3 setup.py build_ext --inplace`, just import the module in python3: `import BiRewire as br` for example.
+Clone or download the whole progect, in the repo directory run `python3 setup.py build_ext --inplace`, just import the module in python3: `import BiRewire as br` for example. Is should works also if compiled with python 2.x (and imported it from python2.x).
