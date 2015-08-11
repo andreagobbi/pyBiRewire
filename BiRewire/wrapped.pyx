@@ -165,7 +165,7 @@ class Rewiring:
     #__type_of_data=None
     #__type_of_graph=None
     #__type_of_array=None
-    def __init__(self,data,type_of_array=None,type_of_graph=None):
+    def __init__(self,data,type_of_array=None,type_of_graph=None,verbose=False):
         """Rewiring object
 
         This class contains useful information when dealing with undirected or bipartite
@@ -232,7 +232,8 @@ class Rewiring:
             else:
                 print "Data type not supported.\n" 
                 self.data=None
-        print "Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph     
+        if verbose:
+            print("Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph)
     def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True):
         """ Rewiring routine
 
