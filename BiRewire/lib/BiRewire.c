@@ -21,6 +21,17 @@
 
 #include "BiRewire.h"
 #include <math.h>
+void inline set_rand(unsigned int seed)
+{
+if(seed==0)
+	{
+		srand(time(NULL));
+	}
+	else
+	{	
+		srand(seed);
+	}
+}
 static inline void loadBar(size_t x, size_t n, int r, int w)
 {
 
@@ -86,11 +97,11 @@ double inline similarity(unsigned short *m,unsigned short *n,size_t ncol,size_t 
 
 
 
-size_t analysis(unsigned short *incidence,size_t ncol,size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose)
+size_t analysis(unsigned short *incidence,size_t ncol,size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,unsigned int seed)
 {
 
 
-
+	set_rand(seed);
 	size_t i,j,kk,n,rand1,rand2;
 	size_t dim=max_iter+1;
 	size_t *from;
@@ -161,8 +172,11 @@ size_t analysis(unsigned short *incidence,size_t ncol,size_t nrow,double *scores
 
 
 
-size_t analysis_ex(unsigned short *incidence,size_t ncol,size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose, size_t MAXITER)
+size_t analysis_ex(unsigned short *incidence,size_t ncol,size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose, size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
 
 
@@ -244,8 +258,11 @@ size_t analysis_ex(unsigned short *incidence,size_t ncol,size_t nrow,double *sco
 	return (index-1);
 }
 
-size_t rewire_bipartite(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose)
+size_t rewire_bipartite(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,unsigned int seed)
 {
+
+
+	set_rand(seed);
 	size_t i,j,kk,n,e=0,rand1,rand2;
 	size_t *from;
 	size_t a,b,c,d;
@@ -302,8 +319,11 @@ return 0;
 }
 
 
-size_t rewire_bipartite_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER)
+size_t rewire_bipartite_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 	size_t i,j,kk,n,e=0,rand1,rand2,t=0;
 	size_t *from;
 	size_t a,b,c,d;
@@ -392,8 +412,11 @@ size_t inline static check(size_t *pos,size_t *to,size_t *index,size_t a,size_t 
     return(1);
 }
 
-size_t rewire_sparse_bipartite(size_t *from,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t e,size_t verbose)
+size_t rewire_sparse_bipartite(size_t *from,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t e,size_t verbose,unsigned int seed)
 {
+
+
+	set_rand(seed);
 	size_t i,j,kk,n,rand1,rand2;
  	size_t a,b,c,d;
 	size_t *index;
@@ -449,8 +472,11 @@ size_t rewire_sparse_bipartite(size_t *from,size_t *to,size_t nc,size_t nr,size_
 }
 
 
-size_t rewire_sparse_bipartite_ex(size_t *from,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t e,size_t verbose,size_t MAXITER)
+size_t rewire_sparse_bipartite_ex(size_t *from,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t e,size_t verbose,size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 	size_t i,j,kk,n,rand1,rand2,t=0;
  	size_t a,b,c,d;
 	size_t *index;
@@ -524,8 +550,11 @@ double similarity_undirected(unsigned short *m,unsigned short *n,size_t ncol,siz
 
 
 
-size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose)
+size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
 
 	size_t i,j,kk,n,index,rand1,rand2;
@@ -652,8 +681,11 @@ size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,do
 	return (index-1);
 }
 
-size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER)
+size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
 
 	size_t i,j,kk,n,index,rand1,rand2,t=0;
@@ -801,8 +833,11 @@ size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow
 }
 
 
-size_t rewire(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_iter,size_t verbose)
+size_t rewire(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
  	size_t i,j,kk,n,rand1,rand2;
 	size_t e=0;
@@ -913,8 +948,11 @@ size_t rewire(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_iter
 }
 
 
-size_t rewire_ex(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER)
+size_t rewire_ex(unsigned short *incidence,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
  	size_t i,j,kk,n,rand1,rand2,t=0;
 	size_t e=0;
@@ -1110,8 +1148,11 @@ size_t static inline is_not(size_t a,size_t d,size_t *degree,unsigned short *adj
             return(0);
     return(1);
 }
-size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t nrow,size_t max_iter, size_t e,size_t verbose)
+size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t nrow,size_t max_iter, size_t e,size_t verbose,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
  	size_t i,n,rand1,rand2;
     //copy of the original incidence matrix
@@ -1220,8 +1261,11 @@ size_t rewire_sparse(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t
 	return 0;
 }
 
-size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t nrow,size_t max_iter, size_t e,size_t verbose,size_t MAXITER)
+size_t rewire_sparse_ex(size_t *from, size_t *to,size_t *degree,size_t ncol, size_t nrow,size_t max_iter, size_t e,size_t verbose,size_t MAXITER,unsigned int seed)
 {
+
+
+	set_rand(seed);
 
  	size_t i,n,rand1,rand2,t=0;
     //copy of the original incidence matrix

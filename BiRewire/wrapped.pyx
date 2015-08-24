@@ -25,21 +25,21 @@ import csv
 cdef extern from "lib/BiRewire.h":
     double similarity_undirected(unsigned short *m,unsigned short *n,size_t ncol,size_t nrow,size_t e)
     double similarity(unsigned short *m,unsigned short *n,size_t ncol,size_t nrow,size_t e )
-    size_t analysis_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER)
-    size_t analysis(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose)
-    size_t rewire_bipartite(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose)
-    size_t rewire_bipartite_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER)
-    size_t rewire_sparse_bipartite_ex(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER)
-    size_t rewire_sparse_bipartite(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose)
+    size_t analysis_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t analysis(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,unsigned int seed)
+    size_t rewire_bipartite(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,unsigned int seed)
+    size_t rewire_bipartite_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t rewire_sparse_bipartite_ex(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t rewire_sparse_bipartite(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,unsigned int seed)
 
-    size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose)
-    size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER)
-    size_t rewire(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose)
-    size_t rewire_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER)
-    size_t rewire_sparse_ex(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER)
-    size_t rewire_sparse(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose)
+    size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,unsigned int seed)
+    size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t rewire(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,unsigned int seed)
+    size_t rewire_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t rewire_sparse_ex(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER,unsigned int seed)
+    size_t rewire_sparse(size_t *fro,size_t *to,size_t *degree,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,unsigned int seed)
 
-def c_rewire_sparse_undirected(np.ndarray left,np.ndarray right,np.ndarray degree,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
+def c_rewire_sparse_undirected(np.ndarray left,np.ndarray right,np.ndarray degree,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,seed=0):
 
     cdef size_t e,nc,nr,t
     e= len(left)
@@ -52,11 +52,11 @@ def c_rewire_sparse_undirected(np.ndarray left,np.ndarray right,np.ndarray degre
         else:
             N=(e/(2*d^3-6*d^2+2*d+2))*log((1-d)/accuracy)  
     if exact:
-        return N,<int>rewire_sparse_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose, N*MAXITER)
+        return N,<int>rewire_sparse_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose, N*MAXITER,seed)
     else:
-        return N,<int>rewire_sparse(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose)
+        return N,<int>rewire_sparse(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),<size_t *>np.PyArray_DATA(degree),nr, nc, N, e, verbose,seed)
 
-def c_rewire_sparse_bipartite(np.ndarray left,np.ndarray right,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
+def c_rewire_sparse_bipartite(np.ndarray left,np.ndarray right,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,seed=0):
 
     cdef size_t e,nc,nr,t
     e= len(left)
@@ -68,12 +68,12 @@ def c_rewire_sparse_bipartite(np.ndarray left,np.ndarray right,N=-1, verbose=1, 
         else:
             N=ceil((e/(2-2*e/t)) *log((1-e/t)/accuracy) )   
     if exact:
-        return N,<int>rewire_sparse_bipartite_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),nr, nc, N, e, verbose, N*MAXITER)
+        return N,<int>rewire_sparse_bipartite_ex(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),nr, nc, N, e, verbose, N*MAXITER,seed)
     else:
-        return N,<int>rewire_sparse_bipartite(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),nr, nc, N, e, verbose)
+        return N,<int>rewire_sparse_bipartite(<size_t*>np.PyArray_DATA(left),<size_t *>np.PyArray_DATA(right),nr, nc, N, e, verbose,seed)
 
 
-def c_rewire_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
+def c_rewire_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,seed=0):
     cdef size_t e,nc,nr,t
     nc,nr= incidence.shape[1],incidence.shape[0]
     t=nc*nr
@@ -84,11 +84,11 @@ def c_rewire_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accura
         else:
             N=ceil((e/(2-2*e/t)) *log((1-e/t)/accuracy) )  
     if exact:
-        return   N,<int>rewire_bipartite_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose, N*MAXITER)
+        return   N,<int>rewire_bipartite_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose, N*MAXITER,seed)
     else:
-         return  N,<int>rewire_bipartite(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose)
+         return  N,<int>rewire_bipartite(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose,seed)
 
-def c_rewire_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True):
+def c_rewire_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,seed=0):
     cdef size_t e,nc,nr,t,d
     nc,nr= incidence.shape[1],incidence.shape[0]
     t=nc*nr/2
@@ -100,11 +100,11 @@ def c_rewire_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accur
         else:
             N=(e/(2*d^3-6*d^2+2*d+2))*log((1-d)/accuracy)
     if exact:
-        return  N,<int>rewire_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose, N*MAXITER)
+        return  N,<int>rewire_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose, N*MAXITER,seed)
     else:
-         return N,<int>rewire(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose)
+         return N,<int>rewire(<unsigned short*>np.PyArray_DATA(incidence), nc,  nr, N, verbose,seed)
 
-def c_analysis_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,step=10):
+def c_analysis_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,step=10,seed=0):
     cdef size_t e,nc,nr,t,dim
     cdef np.ndarray scores
     nc,nr= incidence.shape[1],incidence.shape[0]
@@ -117,13 +117,13 @@ def c_analysis_bipartite(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accu
             N=ceil((e/(2-2*e/t)) *log((1-e/t)/accuracy) )  
     score=np.ascontiguousarray(np.zeros(N+1),dtype=np.double)
     if exact:
-        dim=  <int>analysis_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose, MAXITER*N)
+        dim=  <int>analysis_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose, MAXITER*N,seed)
     else:
-        dim=  <int>analysis(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose)
+        dim=  <int>analysis(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose,seed)
 
     return N,score[0:dim]
 
-def c_analysis_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,step=10):
+def c_analysis_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, accuracy=0.00005,exact=True,step=10,seed=0):
     cdef size_t e,nc,nr,t,dim,d
     cdef np.ndarray scores
     nc,nr= incidence.shape[1],incidence.shape[0]
@@ -137,9 +137,9 @@ def c_analysis_undirected(np.ndarray incidence,N=-1, verbose=1,  MAXITER=10, acc
             N=(e/(2*d^3-6*d^2+2*d+2))*log((1-d)/accuracy)
     score=np.ascontiguousarray(np.zeros(N+1),dtype=np.double)
     if exact:
-        dim=  <int>analysis_undirected_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose, MAXITER*N)
+        dim=  <int>analysis_undirected_ex(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose, MAXITER*N,seed)
     else:
-        dim=  <int>analysis_undirected(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose)
+        dim=  <int>analysis_undirected(<unsigned short*>np.PyArray_DATA(incidence), nc,nr,<double*>np.PyArray_DATA(score), step, N, verbose,seed)
 
     return N,score[0:dim]
 
@@ -233,7 +233,7 @@ class Rewiring:
                 print "Data type not supported.\n" 
                 self.data=None
         print "Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph     
-    def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True):
+    def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,seed=0):
         """ Rewiring routine
 
         It performs N switching steps of the graph encoded as a Rewiring
@@ -250,7 +250,7 @@ class Rewiring:
                 and the theoretical one from the fixed point.
             exact : True defautl. If False the routine counts also the unsucessfull
                 switching step. A suitable N is computed in order to catch such faliures.
-
+            seed : sees passed to C srand function
         :Returns:   
             Boolean: if the switching algorithm has been sucessfully completed.
         """
@@ -259,6 +259,7 @@ class Rewiring:
         self.MAXITER=MAXITER
         self.accuracy=accuracy
         self.exact=exact
+        self.seed=seed
         if N<=0 and N!=-1:
             print 'N must be positive or -1'
             return False 
@@ -269,7 +270,7 @@ class Rewiring:
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
                 #right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
                 right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
-                tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed)
                 result=np.vstack((left,right)).T
                 result=i.Graph(list(result))
             else:
@@ -281,7 +282,7 @@ class Rewiring:
                 for j in range (0,len(right)):
                     degree[result[j,0]]+=1
                     degree[result[j,1]]+=1
-                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact) 
+                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed) 
                 result=np.vstack((left,right)).T
                 result=i.Graph(list(result))        
         if self.__type_of_data=="array":
@@ -294,7 +295,7 @@ class Rewiring:
                 for j in range (0,len(right)):
                     degree[result[j,0]]+=1
                     degree[result[j,1]]+=1
-                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                tmp=c_rewire_sparse_undirected(left,right,degree,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed)
                 result=np.vstack((left,right)).T
                 for j in range(0,result.shape[0]):
                     if result[j,0]>result[j,1]:
@@ -306,15 +307,15 @@ class Rewiring:
                 left=np.ascontiguousarray(result[:,0],dtype=np.uintp)
                 #right=np.ascontiguousarray(result[:,1]-min(result[:,1]),dtype=np.uintp)
                 right=np.ascontiguousarray(result[:,1],dtype=np.uintp)
-                tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                tmp=c_rewire_sparse_bipartite(left,right,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed)
                 result=np.vstack((left,right)).T
             if self.__type_of_array=="incidence":
                 result=np.ascontiguousarray(np.copy(self.data),dtype="H")
-                tmp=c_rewire_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                tmp=c_rewire_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed)
               
             if self.__type_of_array=="adjacence":
                 result=np.ascontiguousarray(np.copy(self.data),dtype="H")
-                tmp=c_rewire_undirected(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact)
+                tmp=c_rewire_undirected(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact, self.seed)
         self.N=tmp[0]
         self.data_rewired=result
         if tmp[1]==0:
@@ -349,7 +350,7 @@ class Rewiring:
             if self.__type_of_array=="incidence" or self.__type_of_array=="adjacence":
                 return   (self.data*self.data_rewired).sum()/((self.data+self.data_rewired).sum()-(self.data*self.data_rewired).sum())
 
-    def analysis(self,n_networks=50,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,step=10): 
+    def analysis(self,n_networks=50,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,step=10,seed=0): 
         """ Analysis routine
 
         It computes the jaccard index between the initail grah and the current rewired version every step steps.
@@ -368,7 +369,7 @@ class Rewiring:
                 switching step. A suitable N is computed in order to catch such faliures.
             step : the number of SS between two measurement of the jaccard index.
             n_networks: the number of independent samples.
-
+            seed : seed passed to srand function
         :Returns:   
             Boolean: if the switching algorithm has been sucessfully completed.
         """
@@ -378,14 +379,15 @@ class Rewiring:
         self.exact=exact 
         self.step=step
         self.N=N
+        self.seed=seed
         result=np.ascontiguousarray(np.copy(self.data),dtype="H")
         RES=list()
         for j in range(0,n_networks):
             if self.__type_of_graph=="bipartite" and self.__type_of_array=="incidence":
-                tmp=c_analysis_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)        
+                tmp=c_analysis_bipartite(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step, self.seed)        
             else:  
                 if self.__type_of_graph=="undirected" and self.__type_of_array=="adjacence":
-                    tmp=c_analysis_undirected(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step)      
+                    tmp=c_analysis_undirected(result,self.N, self.verbose,  self.MAXITER, self.accuracy,self.exact,self.step, self.seed)      
                 else:
                     print "I accept only incidence and adjacency matrix"    
                     return False
@@ -395,7 +397,7 @@ class Rewiring:
         self.jaccard_index=RES
         self.N=tmp[0]
         return True         
-    def sampler(self,path,K=2000,max=1000,N=-1,verbose=0,MAXITER=10, accuracy=0.00005,exact=True):
+    def sampler(self,path,K=2000,max=1000,N=-1,verbose=0,MAXITER=10, accuracy=0.00005,exact=True,seed=0):
         """ Null model sampler
 
         It creates K randomized graph starting from the initial graph writing the 
@@ -411,6 +413,7 @@ class Rewiring:
                 and the theoretical one from the fixed point.
             exact : True defautl. If False the routine counts also the unsucessfull
                 switching step. A suitable N is computed in order to catch such faliures.
+            seed : seed passed to srand C function
             
         :Returns:   
             Boolean: if the sampler procedure has been sucessfully completed.
@@ -426,7 +429,7 @@ class Rewiring:
                     max=K-max*i
             for j in range(0,max):
                 
-                if self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact)==False:
+                if self.rewire(N=N,verbose=verbose,MAXITER=MAXITER, accuracy=accuracy,exact=exact,seed=seed)==False:
                     self.data=initial.copy()
                     return False
                 self.data=self.data_rewired
@@ -439,7 +442,7 @@ class Rewiring:
             print "Saved "+str(max)+" files"
         self.data=initial
         return True
-    def monitoring(self,n_networks=50,sequence=(1,10,100,-1),verbose=0,MAXITER=10, accuracy=0.00005,exact=True): 
+    def monitoring(self,n_networks=50,sequence=(1,10,100,-1),verbose=0,MAXITER=10, accuracy=0.00005,exact=True, seed=0): 
         """ Monitoring of the underlying markov chain
 
         It samples n_networks times the markov chain at the steps indicates in the list sequence.
@@ -459,6 +462,7 @@ class Rewiring:
         self.verbose=verbose
         self.accuracy=accuracy
         self.exact=exact
+        self.seed=seed
         for s in sequence:
             self.data=data_initial.copy()
             m=np.zeros((n_networks,n_networks))
