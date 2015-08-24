@@ -232,9 +232,14 @@ class Rewiring:
             else:
                 print "Data type not supported.\n" 
                 self.data=None
+<<<<<<< HEAD
+        print "Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph     
+    def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,seed=0):
+=======
         if verbose:
             print("Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph)
     def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True):
+>>>>>>> f3b22227825a98647c493f06d916a3998e21725a
         """ Rewiring routine
 
         It performs N switching steps of the graph encoded as a Rewiring
@@ -251,7 +256,7 @@ class Rewiring:
                 and the theoretical one from the fixed point.
             exact : True defautl. If False the routine counts also the unsucessfull
                 switching step. A suitable N is computed in order to catch such faliures.
-            seed : sees passed to C srand function. If 0 the seed is set to time(NULL).
+            seed : sees passed to C srand function
         :Returns:   
             Boolean: if the switching algorithm has been sucessfully completed.
         """
@@ -370,7 +375,7 @@ class Rewiring:
                 switching step. A suitable N is computed in order to catch such faliures.
             step : the number of SS between two measurement of the jaccard index.
             n_networks: the number of independent samples.
-            seed : seed passed to srand function. If 0 the seed is set to time(NULL).
+            seed : seed passed to srand function
         :Returns:   
             Boolean: if the switching algorithm has been sucessfully completed.
         """
@@ -414,7 +419,7 @@ class Rewiring:
                 and the theoretical one from the fixed point.
             exact : True defautl. If False the routine counts also the unsucessfull
                 switching step. A suitable N is computed in order to catch such faliures.
-            seed : seed passed to srand C function.  If 0 the seed is set to time(NULL).
+            seed : seed passed to srand C function
             
         :Returns:   
             Boolean: if the sampler procedure has been sucessfully completed.
