@@ -234,7 +234,7 @@ class Rewiring:
                 self.data=None
         if verbose:
             print("Object created: array="+self.__type_of_array+" data="+self.__type_of_data+" graph="+self.__type_of_graph)
-    def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True):
+    def rewire(self,N=-1,verbose=1,MAXITER=10, accuracy=0.00005,exact=True,seed=0):
         """ Rewiring routine
 
         It performs N switching steps of the graph encoded as a Rewiring
