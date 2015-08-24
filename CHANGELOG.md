@@ -1,3 +1,6 @@
+#V 0.4
+* possibility so set seed for srand C function
+
 #V 0.3
 * bug fixing
 * now the analysis is perfomed using n_networks number of graphs generated independently form the initial one
