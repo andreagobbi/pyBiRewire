@@ -18,7 +18,7 @@ cimport cython
 import numpy as np
 cimport numpy as np
 from math import *
-import igraph as i
+import jgraph as i
 import os
 import csv
 
@@ -31,7 +31,6 @@ cdef extern from "lib/BiRewire.h":
     size_t rewire_bipartite_ex(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
     size_t rewire_sparse_bipartite_ex(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,size_t MAXITER,unsigned int seed)
     size_t rewire_sparse_bipartite(size_t *fro,size_t *to,size_t nc,size_t nr,size_t max_iter,size_t ne,size_t verbose,unsigned int seed)
-
     size_t analysis_undirected(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,unsigned int seed)
     size_t analysis_undirected_ex(unsigned short *incidence,size_t ncol, size_t nrow,double *scores,size_t step,size_t max_iter,size_t verbose,size_t MAXITER,unsigned int seed)
     size_t rewire(unsigned short *matrix,size_t ncol, size_t nrow,size_t max_iter,size_t verbose,unsigned int seed)
@@ -152,6 +151,9 @@ def incidence(np.ndarray x):
     edge_list=np.transpose((x==1).nonzero())
     edge_list[:,1]=edge_list[:,1]+x.shape[0]
     return i.Graph(list(edge_list))
+
+class Dsg:
+    def __init__(self,data,type_of_array=None,type_of_graph=None):
 class Rewiring:
     #data=None
     #N=None
@@ -174,8 +176,8 @@ class Rewiring:
         :Parameters:
             data : the initial data. It can be a numpy matrix encoding an edgelist, an incidence
                 matrix (for bipartite network) an adjacency matrix (for undirected network) or an 
-                igraph object. For a correct use, if an edgelist is given, the values (nodes id) must start
-                from 0 and have no holes.
+                igraph object or a dsg class object. For a correct use, if an edgelist is given, 
+                the values (nodes id) must start from 0 and have no holes.
             type_of_array: one among "edgelist_b","incidence", "adjacence","edgelist_u". If the 
                 data filed is a numpy array we must specify what this array encodes. The first 
                 two encode a bipartite network, the other two an undirected graph.

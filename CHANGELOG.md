@@ -1,3 +1,9 @@
+#V 0.5
+* Bug fixing due to jgraph renamed package
+
+#V 0.5
+* EXTESION to directed signed networks
+
 #V 0.4
 * possibility so set seed for srand C function
 

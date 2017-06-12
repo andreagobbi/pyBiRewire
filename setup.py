@@ -19,10 +19,10 @@ from Cython.Distutils import build_ext
 import numpy as np
 
 NAME = "BiRewire"
-VERSION = "0.4"
+VERSION = "0.6"
 DESCR = "A Cython wrapper of BiRewire"
 URL = "http://bioconductor.org/packages/devel/bioc/html/BiRewire.html"
-REQUIRES = ['numpy', 'cython']
+REQUIRES = ['numpy', 'cython','igraph','jgraph']
 
 AUTHOR = "Andrea Gobbi"
 EMAIL = "gobbi.andrea@mail.com"
