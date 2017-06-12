@@ -151,9 +151,11 @@ def incidence(np.ndarray x):
     edge_list=np.transpose((x==1).nonzero())
     edge_list[:,1]=edge_list[:,1]+x.shape[0]
     return i.Graph(list(edge_list))
+#TODO
+#class Dsg:
+#    def __init__(self,data,type_of_array=None,type_of_graph=None):
 
-class Dsg:
-    def __init__(self,data,type_of_array=None,type_of_graph=None):
+    
 class Rewiring:
     #data=None
     #N=None

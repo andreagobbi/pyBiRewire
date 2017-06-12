@@ -1,5 +1,5 @@
-#V 0.5
-* Bug fixing due to jgraph renamed package
+#V 0.6
+* Bug fixing due to jgraph renamed package, DSG network removed for maintenance
 
 #V 0.5
 * EXTESION to directed signed networks
